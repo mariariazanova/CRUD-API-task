@@ -1,4 +1,4 @@
-import { IncomingMessage, ServerResponse } from 'http';
+import {IncomingMessage, ServerResponse} from 'http';
 import {
   createUserInDb,
   deleteUserInDb,
@@ -10,6 +10,8 @@ import { sendJsonResponse } from '../utils/sendJsonResponse';
 import { parseRequestBody } from '../utils/parseRequestBody';
 import { getIdFromUrl } from '../utils/urlUtils';
 import { isValidUUID } from '../utils/validationUtils';
+import { checkRequestArguments } from '../utils/checkRequestArguments';
+import { RestMethod } from '../enums/restMethod';
 
 export const getAllUsers = (res: ServerResponse): void => {
   const users = getAllUsersFromDb();
@@ -31,16 +33,12 @@ export const getUserById = (res: ServerResponse, pathName: string): void => {
 };
 
 export const createUser = async (req: IncomingMessage, res: ServerResponse) => {
-  const body = await parseRequestBody(req);
+  try {
+    const body = await parseRequestBody(req);
 
-  if (!body.username || !body.age || !body.hobbies) {
-    sendJsonResponse(res, undefined, 400, 'Not all required fields are filled');
-  } else if (typeof body.username !== 'string' || typeof body.age !== 'number' || !Array.isArray(body.hobbies) || body.hobbies.some((item: string) => typeof item !== 'string')) {
-    sendJsonResponse(res, undefined, 400, 'Not correct data format');
-  } else {
-      const newUser = createUserInDb(body);
-
-      sendJsonResponse(res, newUser, 201);
+    checkRequestArguments(res, body, () => createUserInDb(body), RestMethod.Post);
+  } catch {
+    sendJsonResponse(res, undefined, 400, 'Invalid JSON');
   }
 };
 
@@ -49,22 +47,12 @@ export const updateUser = async (req: IncomingMessage, res: ServerResponse, path
   const isIdValid = isValidUUID(userId);
 
   if (isIdValid) {
-    const body = await parseRequestBody(req);
-    const requiredKeys: Array<string> = ['username', 'age', 'hobbies'];
+    try {
+      const body = await parseRequestBody(req);
 
-    if (Object.keys(body).every((key:string) => requiredKeys.includes(key))) {
-    // if (Object.keys(body).every(key => key in requiredKeys)) {
-      if ((body?.username && typeof body.username !== 'string') || (body?.age && typeof body.age !== 'number') || (body?.hobbies && !Array.isArray(body.hobbies)) && body.hobbies.some((item: string) => typeof item !== 'string')) {
-        sendJsonResponse(res, undefined, 400, 'Not correct data format');
-      } else {
-        const updatedUser = updateUserInDb(userId, body);
-
-        updatedUser ? sendJsonResponse(res, updatedUser) : sendJsonResponse(res, undefined, 404, 'User not found');
-      }
-    } else if (Object.keys(body).some((key:string) => key === 'id')) {
-      sendJsonResponse(res, undefined, 400, 'No access to change user id');
-    } else {
-      sendJsonResponse(res, undefined, 400, 'No such properties in interface');
+      checkRequestArguments(res, body, () => updateUserInDb(body, userId), RestMethod.Put);
+    } catch {
+      sendJsonResponse(res, undefined, 400, 'Invalid JSON');
     }
   } else {
     sendJsonResponse(res, undefined, 400, 'User id is invalid');

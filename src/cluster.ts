@@ -11,12 +11,11 @@ const workerPorts = Array.from({ length: numCPUs - 1 }, (_, i) => BASE_PORT + i 
 if (cluster.isPrimary) {
   // Primary process acts as the load balancer
   // eslint-disable-next-line no-console
-  console.log(`Master ${process.pid} is running`);
+  console.log(`Master ${ process.pid } is running`);
 
   // Fork worker processes for each CPU (except the one for the master process)
   workerPorts.forEach(() => cluster.fork());
 
-  // Round-robin index for distributing requests
   let currentWorker = 0;
 
   // Create the load balancer that listens on the base port
@@ -24,6 +23,7 @@ if (cluster.isPrimary) {
     // Forward requests to the next worker in a round-robin fashion
     const workerPort = workerPorts[currentWorker];
     console.log(`Worker on port ${ workerPort} receives request ${ req.method} ${ req.url }`);
+
     const proxy = http.request(
       {
         hostname: 'localhost',
@@ -44,7 +44,6 @@ if (cluster.isPrimary) {
     currentWorker = (currentWorker + 1) % workerPorts.length;
   });
 
-  // The load balancer listens on the base port (4000)
   loadBalancer.listen(BASE_PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Load balancer listening on port ${ BASE_PORT }`);
@@ -57,8 +56,10 @@ if (cluster.isPrimary) {
     cluster.fork();
   });
 
-  // Handle SIGINT to shut down the load balancer gracefully
   process.on('SIGINT', () => {
+    setUsers([]);
+    saveDataToFile();
+
     loadBalancer.close((err) => {
       if (err) {
         process.exit(1);
@@ -84,7 +85,7 @@ if (cluster.isPrimary) {
         console.error('Error while closing server:', err.message);
         process.exit(1);
       } else {
-        console.log(`Worker ${workerId} closed.`);
+        console.log(`Worker ${ workerId } closed.`);
         process.exit(0);
       }
     });

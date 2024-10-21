@@ -34,7 +34,7 @@ describe('CRUD API Tests', () => {
   });
 
   it('GET /api/users/:userId - should return the created user', async () => {
-    const res = await request(server).get(`/api/users/${createdUserId}`);
+    const res = await request(server).get(`/api/users/${ createdUserId }`);
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(createdUserId);
@@ -49,7 +49,7 @@ describe('CRUD API Tests', () => {
     };
 
     const res = await request(server)
-      .put(`/api/users/${createdUserId}`)
+      .put(`/api/users/${ createdUserId }`)
       .send(updatedUserMock);
 
     expect(res.status).toBe(200);
@@ -60,13 +60,13 @@ describe('CRUD API Tests', () => {
   });
 
   it('DELETE /api/users/:userId - should delete the created user', async () => {
-    const res = await request(server).delete(`/api/users/${createdUserId}`);
+    const res = await request(server).delete(`/api/users/${ createdUserId }`);
 
     expect(res.status).toBe(204);
   });
 
   it('GET /api/users/:userId - should return 404 for deleted user', async () => {
-    const res = await request(server).get(`/api/users/${createdUserId}`);
+    const res = await request(server).get(`/api/users/${ createdUserId }`);
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe('User not found');

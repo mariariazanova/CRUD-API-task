@@ -21,7 +21,7 @@ export const createUserInDb = (userData: Omit<User, 'id'>): User => {
   return newUser;
 };
 
-export const updateUserInDb = (id: string, userData: Partial<Omit<User, 'id'>>): User | undefined => {
+export const updateUserInDb = (userData: Partial<Omit<User, 'id'>>, id: string): User | undefined => {
   const users = getUsers();
   const userIndex = users.findIndex((user) => user.id === id);
 
